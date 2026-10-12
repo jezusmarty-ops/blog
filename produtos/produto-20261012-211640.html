@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Planejador de quitação de dívidas: descubra em quantos meses você zera suas dívidas e quantos juros economiza com as estratégias Avalanche e Bola de Neve.">
+<title>Quitaí — Planejador de Quitação de Dívidas</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  [hidden]{display:none !important;}
+  body{
+    margin:0;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:#080c18;color:#e8eefc;line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(900px 520px at 8% -12%, rgba(56,224,168,.13), transparent 62%),
+      radial-gradient(820px 520px at 102% -6%, rgba(74,168,255,.13), transparent 60%);
+  }
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:26px 16px 90px;}
+
+  /* ---------- HEADER ---------- */
+  header{margin-bottom:22px;}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .logo{
+    width:52px;height:52px;flex:0 0 52px;border-radius:16px;
+    background:linear-gradient(140deg,#38e0a8,#4aa8ff);
+    display:grid;place-items:center;font-weight:900;font-size:26px;color:#06121a;
+    box-shadow:0 10px 30px rgba(56,224,168,.25);
+  }
+  h1{
+    margin:0;font-size:clamp(23px,4.2vw,32px);letter-spacing:-.02em;
+    background:linear-gradient(90deg,#ffffff,#9fe9cf 55%,#8ec8ff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .tag{margin:2px 0 0;color:#93a4c4;font-size:14px;}
+
+  /* ---------- PANELS ---------- */
+  .panel{
+    background:linear-gradient(180deg,#111a2e,#0d1526);
+    border:1px solid #22304e;border-radius:18px;
+    padding:20px;margin-bottom:18px;
+    box-shadow:0 18px 50px rgba(0,0,0,.28);
+  }
+  .panel h2{
+    margin:0 0 14px;font-size:16px;letter-spacing:.02em;text-transform:uppercase;
+    color:#b9c9e8;font-weight:700;
+  }
+  .panel h3{margin:0;font-size:15px;color:#cfdcf5;font-weight:700;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+  .panel-head h2{margin:0;}
+
+  /* ---------- COMO USAR ---------- */
+  .how{border-color:#1f4d43;background:linear-gradient(180deg,#0f2029,#0d1526);}
+  .how h2{color:#8ff0cd;}
+  .how ol{margin:0;padding-left:20px;color:#c6d4ee;font-size:14.5px;}
+  .how li{margin-bottom:7px;}
+  .how li:last-child{margin-bottom:0;}
+  .how strong{color:#fff;font-weight:600;}
+
+  /* ---------- FORM ---------- */
+  label{
+    display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    color:#8296b8;margin-bottom:6px;
+  }
+  input,select{
+    width:100%;background:#0a1120;border:1px solid #26344f;color:#e8eefc;
+    padding:11px 12px;border-radius:11px;font-size:15px;font-family:inherit;
+    transition:border-color .15s, box-shadow .15s, background .15s;
+    appearance:none;-webkit-appearance:none;
+  }
+  select{
+    background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238296b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;background-size:17px;padding-right:34px;
+  }
+  input::placeholder{color:#4f6386;}
+  input:focus,select:focus{outline:none;border-color:#38e0a8;box-shadow:0 0 0 3px rgba(56,224,168,.15);background:#0c1426;}
+  input.invalid{border-color:#ff6b81;box-shadow:0 0 0 3px rgba(255,107,129,.14);}
+
+  .debt-row{
+    display:grid;grid-template-columns:1.5fr 1fr .9fr 1fr auto;gap:10px;
+    padding:12px;margin-bottom:10px;border-radius:14px;
+    background:#141d33;border:1px solid #22304e;
+  }
+  .debt-row .cell{min-width:0;}
+  .icon-btn{
+    align-self:end;width:44px;height:44px;border-radius:11px;cursor:pointer;
+    background:#1b2540;border:1px solid #2c3b5c;color:#93a4c4;font-size:15px;
+    transition:.15s;line-height:1;
+  }
+  .icon-btn:hover{background:#3a1d29;border-color:#7a2f42;color:#ff8fa3;}
+
+  .config{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+  .cell small{display:block;margin-top:6px;color:#6b7fa3;font-size:12px;}
+
+  .btn{
+    border:1px solid #2c3b5c;background:#1b2540;color:#dbe6fb;
+    padding:10px 15px;border-radius:11px;font-size:14px;font-weight:600;font-family:inherit;
+    cursor:pointer;transition:.15s;
+  }
+  .btn:hover{background:#22304f;border-color:#3c5490;color:#fff;}
+  .btn.accent{background:linear-gradient(135deg,#38e0a8,#2bb890);color:#04140f;border-color:transparent;}
+  .btn.accent:hover{filter:brightness(1.08);}
+
+  /* ---------- MENSAGENS ---------- */
+  .msg{margin-top:14px;font-size:14px;border-radius:13px;padding:13px 15px;}
+  .msg ul{margin:7px 0 0;padding-left:19px;}
+  .msg li{margin-bottom:3px;}
+  .m-err{background:rgba(255,107,129,.09);border:1px solid rgba(255,107,129,.35);color:#ffc2cc;}
+  .m-err strong{color:#ff8fa3;}
+  .m-warn{background:rgba(255,200,87,.08);border:1px solid rgba(255,200,87,.32);color:#ffe1a3;}
+  .m-warn strong{color:#ffc857;}
+  .msg > div + div{margin-top:10px;}
+
+  /* ---------- CARDS ---------- */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px;}
+  .card{
+    background:linear-gradient(180deg,#17223c,#111a2e);
+    border:1px solid #22304e;border-radius:15px;padding:15px 16px;
+  }
+  .card.hl{border-color:rgba(56,224,168,.5);box-shadow:0 0 0 1px rgba(56,224,168,.16) inset,0 12px 34px rgba(56,224,168,.09);}
+  .card .lbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#8296b8;}
+  .card .val{
+    margin-top:7px;font-size:clamp(19px,3.4vw,25px);font-weight:800;letter-spacing:-.02em;color:#fff;
+    word-break:break-word;
+  }
+  .card.hl .val{color:#8ff0cd;}
+  .card .sub{margin-top:5px;font-size:12.5px;color:#7d90b2;}
+
+  /* ---------- COMPARAÇÃO ---------- */
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+  .cmp-card{
+    position:relative;background:#0f1729;border:1px solid #22304e;border-radius:15px;padding:14px 16px;
+  }
+  .cmp-card.best{border-color:rgba(56,224,168,.55);background:linear-gradient(180deg,#10261f,#0f1729);}
+  .cmp-card .lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8296b8;}
+  .cmp-card .big{font-size:21px;font-weight:800;margin-top:6px;color:#fff;letter-spacing:-.02em;}
+  .cmp-card .sm{font-size:13px;color:#93a4c4;margin-top:2px;}
+  .badge{
+    display:inline-block;margin-top:9px;font-size:11px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;padding:4px 9px;border-radius:999px;
+    background:rgba(56,224,168,.16);color:#8ff0cd;border:1px solid rgba(56,224,168,.35);
+  }
+
+  /* ---------- GRÁFICO ---------- */
+  .chart-box{margin-top:20px;}
+  .chart-box h3{margin-bottom:12px;}
+  .canvas-wrap{position:relative;height:320px;width:100%;}
+
+  /* ---------- TABELA ---------- */
+  .sched-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:24px 0 12px;}
+  .table-wrap{overflow:auto;max-height:420px;border:1px solid #22304e;border-radius:14px;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px;}
+  th{
+    position:sticky;top:0;background:#141d33;color:#93a4c4;font-size:11px;font-weight:800;
+    letter-spacing:.06em;text-transform:uppercase;text-align:right;padding:11px 13px;white-space:nowrap;
+    border-bottom:1px solid #22304e;
+  }
+  th:first-child,td:first-child{text-align:left;}
+  td{padding:10px 13px;text-align:right;border-bottom:1px solid rgba(34,48,78,.6);color:#cdd9ee;white-space:nowrap;}
+  tbody tr:hover{background:#141d33;}
+  td.neg{color:#ff8fa3;}
+  td.pos{color:#8ff0cd;}
+  #toggleAll{margin-top:12px;width:100%;}
+  .foot{margin-top:26px;text-align:center;color:#5b6d8e;font-size:12.5px;}
+
+  /* ---------- RESPONSIVO ---------- */
+  @media (max-width:760px){
+    .wrap{padding:18px 13px 70px;}
+    .panel{padding:16px;border-radius:16px;}
+    .debt-row{grid-template-columns:1fr 1fr;gap:9px;padding:11px;}
+    .debt-row .cell.name{grid-column:1 / -1;}
+    .debt-row .icon-btn{grid-column:2;justify-self:end;}
+    .config{grid-template-columns:1fr;}
+    .cmp{grid-template-columns:1fr;}
+    .canvas-wrap{height:250px;}
+    .brand{gap:11px;}
+    .logo{width:44px;height:44px;flex:0 0 44px;font-size:22px;border-radius:13px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="logo">Q</div>
+      <div>
+        <h1>Quitaí</h1>
+        <p class="tag">Planejador de quitação de dívidas — Avalanche, Bola de Neve e quantos juros você economiza</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="panel how">
+    <h2>Como usar</h2>
+    <ol>
+      <li>Liste cada dívida com o <strong>saldo devedor</strong>, os <strong>juros mensais</strong> (% ao mês) e o <strong>pagamento mínimo</strong> que você já faz.</li>
+      <li>Informe quanto você consegue pagar <strong>a mais por mês</strong> além de todos os mínimos (use 0 se não sobrar nada).</li>
+      <li>Escolha a <strong>estratégia principal</strong>: Avalanche (ataca a dívida com juros mais altos) ou Bola de Neve (ataca a dívida de menor saldo).</li>
+      <li>Os resultados são recalculados automaticamente: prazo, juros totais, total desembolsado e economia.</li>
+      <li>Compare as duas estratégias no gráfico e no quadro de comparação, e clique em <strong>Baixar CSV</strong> para acompanhar mês a mês.</li>
+    </ol>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Suas dívidas</h2>
+      <button id="addDebt" class="btn" type="button">+ Adicionar dívida</button>
+    </div>
+    <div id="debts"></div>
+
+    <div class="config">
+      <div class="cell">
+        <label for="extra">Valor extra por mês (R$)</label>
+        <input id="extra" inputmode="decimal" autocomplete="off" value="500" placeholder="0,00">
+        <small>Somado a todos os pagamentos mínimos.</small>
+      </div>
+      <div class="cell">
+        <label for="strategy">Estratégia principal</label>
+        <select id="strategy">
+          <option value="avalanche" selected>Avalanche — maior juros primeiro</option>
+          <option value="snowball">Bola de neve — menor saldo primeiro</option>
+        </select>
+        <small>A que melhor se adapta ao seu perfil.</small>
+      </div>
+    </div>
+
+    <div id="msg" class="msg" hidden></div>
+  </section>
+
+  <section class="panel" id="resultsPanel">
+    <h2>Seu plano</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="lbl">Saldo total hoje</div>
+        <div class="val" id="r-saldo">—</div>
+      </div>
+      <div class="card hl">
+        <div class="lbl">Tempo para quitar</div>
+        <div class="val" id="r-tempo">—</div>
+        <div class="sub" id="r-data"></div>
+      </div>
+      <div class="card">
+        <div class="lbl">Juros totais pagos</div>
+        <div class="val" id="r-juros">—</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Total desembolsado</div>
+        <div class="val" id="r-pago">—</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Economia vs. só o mínimo</div>
+        <div class="val" id="r-economia">—</div>
+        <div class="sub" id="r-economia-sub"></div>
+      </div>
+    </div>
+
+    <div class="cmp" id="cmp"></div>
+
+    <div class="chart-box">
+      <h3>Evolução do saldo devedor</h3>
+      <div class="canvas-wrap"><canvas id="chart"></canvas></div>
+    </div>
+
+    <div class="sched-head">
+      <h3>Cronograma mês a mês</h3>
+      <button class="btn" id="csvBtn" type="button">Baixar CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Pago</th>
+            <th>Juros</th>
+            <th>Abatimento</th>
+            <th>Saldo devedor</th>
+          </tr>
+        </thead>
+        <tbody id="schedBody"></tbody>
+      </table>
+    </div>
+    <button class="btn" id="toggleAll" type="button" hidden>Mostrar todos os meses</button>
+  </section>
+
+  <p class="foot">Quitaí é uma ferramenta de simulação educativa. Os valores são estimativas baseadas nas informações fornecidas.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var $  = function(s,r){ return (r||document).querySelector(s); };
+  var $$ = function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+
+  var debtsEl   = $('#debts');
+  var extraEl   = $('#extra');
+  var strategyEl= $('#strategy');
+  var msgEl     = $('#msg');
+  var schedBody = $('#schedBody');
+  var toggleAll = $('#toggleAll');
+  var csvBtn    = $('#csvBtn');
+
+  var chart = null;
+  var lastState = null;
+  var showAllMonths = false;
+  var MAX_MONTHS = 600;
+
+  /* ============ FORMATAÇÃO / PARSER ============ */
+
+  function fmtBRL(n){
+    if (!isFinite(n)) n = 0;
+    return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2});
+  }
+  function fmtNum(n){
+    if (!isFinite(n)) n = 0;
+    return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function csvNum(n){
+    if (!isFinite(n)) n = 0;
+    return n.toFixed(2).replace('.',',');
+  }
+  function esc(s){
+    return String(s==null?'':s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function parseNum(v){
+    if (v === null || v === undefined) return NaN;
+    var s = String(v).trim().replace(/\s+/g,'').replace(/R\$/gi,'');
+    if (!s) return NaN;
+    s = s.replace(/[^0-9.,-]/g,'');
+    if (!s || s === '-' || s === '.' || s === ',') return NaN;
+
+    var hasC = s.indexOf(',') > -1;
+    var hasD = s.indexOf('.') > -1;
+
+    if (hasC && hasD){
+      if (s.lastIndexOf(',') > s.lastIndexOf('.')){
+        s = s.replace(/\./g,'').replace(/,/g,'.');
+      } else {
+        s = s.replace(/,/g,'');
+      }
+    } else if (hasC){
+      var pc = s.split(',');
+      if (pc.length > 2) s = pc.slice(0,-1).join('') + '.' + pc[pc.length-1];
+      else s = s.replace(',', '.');
+    } else if (hasD){
+      var pd = s.split('.');
+      if (pd.length > 2){
+        s = pd.slice(0,-1).join('') + '.' + pd[pd.length-1];
+      } else if (pd[1].length === 3 && pd[0] !== '0' && pd[0].length <= 3){
+        s = pd.join('');
+      }
+    }
+    var n = Number(s);
+    return isFinite(n) ? n : NaN;
+  }
+
+  function fmtMonths(m){
+    if (!isFinite(m) || m <= 0) return '—';
+    var y = Math.floor(m/12);
+    var mo = m % 12;
+    var parts = [];
+    if (y) parts.push(y + (y > 1 ? ' anos' : ' ano'));
+    if (mo) parts.push(mo + (mo > 1 ? ' meses' : ' mês'));
+    return parts.length ? parts.join(' e ') : m + ' meses';
+  }
+
+  function futureDate(months){
+    var d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + months);
+    var meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    return meses[d.getMonth()] + '/' + d.getFullYear();
+  }
+
+  /* ============ LINHAS DE DÍVIDA ============ */
+
+  function addDebtRow(d){
+    d = d || {name:'',bal:'',rate:'',min:''};
+    var row = document.createElement('div');
+    row.className = 'debt-row';
+    row.innerHTML =
+      '<div class="cell name"><label>Dívida</label>' +
+        '<input class="d-name" type="text" autocomplete="off" placeholder="Cartão de crédito" value="'+esc(d.name)+'"></div>' +
+      '<div class="cell"><label>Saldo (R$)</label>' +
+        '<input class="d-bal" inputmode="decimal" autocomplete="off" placeholder="0,00" value="'+esc(d.bal)+'"></div>' +
+      '<div class="cell"><label>Juros (% a.m.)</label>' +
+        '<input class="d-rate" inputmode="decimal" autocomplete="off" placeholder="0,00" value="'+esc(d.rate)+'"></div>' +
+      '<div class="cell"><label>Pagamento mín. (R$)</label>' +
+        '<input class="d-min" inputmode="decimal" autocomplete="off" placeholder="0,00" value="'+esc(d.min)+'"></div>' +
+      '<button class="icon-btn" type="button" title="Remover dívida" aria-label="Remover dívida">✕</button>';
+
+    $('.icon-btn', row).addEventListener('click', function(){
+      row.remove();
+      recalc();
+    });
+    $$('input', row).forEach(function(inp){
+      inp.addEventListener('input', recalc);
+    });
+    debtsEl.appendChild(row);
+  }
+
+  /* ============ MOTOR DE SIMULAÇÃO ============ */
+
+  function pickTarget(list, strategy){
+    var active = list.filter(function(d){ return d.balance > 0.005; });
+    if (!active.length) return null;
+    var best = active[0];
+    for (var i = 1; i < active.length; i++){
+      var d = active[i];
+      if (strategy === 'avalanche'){
+        if (d.rate > best.rate) best = d;
+      } else {
+        if (d.balance < best.balance) best = d;
+      }
+    }
+    return best;
+  }
+
+  function simulate(debts, extra, strategy){
+    var list = debts.map(function(d){
+      return { name:d.name, balance:d.balance, rate:d.rate/100, min:d.min };
+    });
+    var initial = list.reduce(function(s,d){ return s + d.balance; }, 0);
+    var history = [initial];
+    var rows = [];
+    var months = 0, totalInterest = 0, totalPaid = 0;
+    var finished = initial <= 0.005;
+
+    while (months < MAX_MONTHS && !finished){
+      months++;
+
+      var monthInterest = 0;
+      for (var i = 0; i < list.length; i++){
+        var d = list[i];
+        if (d.balance > 0.005){
+          var it = d.balance * d.rate;
+          d.balance += it;
+          monthInterest += it;
+        }
+      }
+      totalInterest += monthInterest;
+
+      var available = extra;
+      for (var j = 0; j < list.length; j++){
+        if (list[j].balance > 0.005){
+          available += Math.min(list[j].min, list[j].balance);
+        }
+      }
+
+      var monthPaid = 0;
+      for (var k = 0; k < list.length; k++){
+        var dd = list[k];
+        if (dd.balance <= 0.005) continue;
+        var pay = Math.min(dd.min, dd.balance);
+        dd.balance -= pay;
+        available -= pay;
+        monthPaid += pay;
+      }
+
+      var guard = 0;
+      while (available > 0.005 && guard < 1000){
+        guard++;
+        var target = pickTarget(list, strategy);
+        if (!target) break;
+        var p = Math.min(available, target.balance);
+        if (p <= 0.0001) break;
+        target.balance -= p;
+        available -= p;
+        monthPaid += p;
+      }
+
+      for (var m = 0; m < list.length; m++){
+        if (list[m].balance < 0.005) list[m].balance = 0;
+      }
+
+      totalPaid += monthPaid;
+      var remaining = list.reduce(function(s,x){ return s + Math.max(x.balance,0); }, 0);
+
+      rows.push({
+        month: months,
+        paid: monthPaid,
+        interest: monthInterest,
+        principal: monthPaid - monthInterest,
+        balance: remaining
+      });
+      history.push(remaining);
+      finished = remaining <= 0.01;
+    }
+
+    return {
+      months: months,
+      totalInterest: totalInterest,
+      totalPaid: totalPaid,
+      rows: rows,
+      history: history,
+      initial: initial,
+      finished: finished
+    };
+  }
+
+  /* ============ LEITURA E VALIDAÇÃO ============ */
+
+  function readInputs(){
+    var debts = [];
+    var errs = [];
+    var warns = [];
+    var rows = $$('.debt-row', debtsEl);
+
+    rows.forEach(function(row, idx){
+      var nameEl = $('.d-name', row),
+          balEl  = $('.d-bal', row),
+          rateEl = $('.d-rate', row),
+          minEl  = $('.d-min', row);
+
+      [balEl, rateEl, minEl].forEach(function(e){ e.classList.remove('invalid'); });
+
+      var name  = nameEl.value.trim() || ('Dívida ' + (idx+1));
+      var balS  = balEl.value.trim();
+      var rateS = rateEl.value.trim();
+      var minS  = minEl.value.trim();
+      var bal   = parseNum(balS);
+      var rate  = parseNum(rateS);
+      var min   = parseNum(minS);
+      var ok    = true;
+
+      if (balS === ''){
+        ok = false; balEl.classList.add('invalid');
+        errs.push(name + ': informe o saldo devedor.');
+      } else if (!isFinite(bal)){
+        ok = false; balEl.classList.add('invalid');
+        errs.push(name + ': saldo inválido. Use apenas números (ex.: 1500,50).');
+      } else if (bal < 0){
+        ok = false; balEl.classList.add('invalid');
+        errs.push(name + ': o saldo não pode ser negativo.');
+      }
+
+      if (rateS === ''){
+        ok = false; rateEl.classList.add('invalid');
+        errs.push(name + ': informe os juros mensais (use 0 se não houver juros).');
+      } else if (!isFinite(rate)){
+        ok = false; rateEl.classList.add('invalid');
+        errs.push(name + ': juros inválidos.');
+      } else if (rate < 0){
+        ok = false; rateEl.classList.add('invalid');
+        errs.push(name + ': os juros não podem ser negativos.');
+      } else if (rate > 100){
+        ok = false; rateEl.classList.add('invalid');
+        errs.push(name + ': juros acima de 100% ao mês. Confira o valor.');
+      }
+
+      if (minS === ''){
+        ok = false; minEl.classList.add('invalid');
+        errs.push(name + ': informe o pagamento mínimo.');
+      } else if (!isFinite(min)){
+        ok = false; minEl.classList.add('invalid');
+        errs.push(name + ': pagamento mínimo inválido.');
+      } else if (min <= 0){
+        ok = false; minEl.classList.add('invalid');
+        errs.push(name + ': o pagamento mínimo deve ser maior que zero.');
+      }
+
+      if (ok && bal > 0){
+        debts.push({ name: name, balance: bal, rate: rate, min: min });
+        if (rate > 0 && min <= bal * (rate/100) + 0.005){
+          warns.push(name + ': o pagamento mínimo (' + fmtBRL(min) + ') não cobre os juros do mês (' +
+                     fmtBRL(bal * rate/100) + '). Sem dinheiro extra, essa dívida cresce.');
+        }
+      }
+    });
+
+    extraEl.classList.remove('invalid');
+    var extraS = extraEl.value.trim();
+    var extra = 0;
+    if (extraS === ''){
+      extraEl.classList.add('invalid');
+      errs.push('Informe o valor extra por mês (use 0 se não sobrar nada).');
+    } else {
+      var v = parseNum(extraS);
+      if (!isFinite(v)){
+        extraEl.classList.add('invalid');
+        errs.push('Valor extra por mês inválido.');
+      } else if (v < 0){
+        extraEl.classList.add('invalid');
+        errs.push('O valor extra não pode ser negativo.');
+      } else {
+        extra = v;
+      }
+    }
+
+    if (!errs.length && debts.length === 0){
+      errs.push('Adicione pelo menos uma dívida com saldo maior que zero.');
+    }
+
+    return { debts: debts, extra: extra, errs: errs, warns: warns };
+  }
+
+  /* ============ MENSAGENS ============ */
+
+  function showMessages(errs, warns){
+    var html = '';
+    if (errs.length){
+      var shown = errs.slice(0,6);
+      html += '<div class="m-err"><strong>Corrija os campos destacados:</strong><ul>' +
+        shown.map(function(e){ return '<li>' + esc(e) + '</li>'; }).join('') +
+        (errs.length > 6 ? '<li>… e mais ' + (errs.length-6) + ' item(ns).</li>' : '') +
+        '</ul></div>';
+    }
+    if (warns.length){
+      html += '<div class="m-warn"><strong>Atenção:</strong><ul>' +
+        warns.map(function(e){ return '<li>' + esc(e) + '</li>'; }).join('') +
+        '</ul></div>';
+    }
+    msgEl.innerHTML = html;
+    msgEl.hidden = !html;
+  }
+
+  function clearResults(){
+    ['#r-saldo','#r-tempo','#r-juros','#r-pago','#r-economia'].forEach(function(id){
+      $(id).textContent = '—';
+    });
+    $('#r-data').textContent = '';
+    $('#r-economia-sub').textContent = '';
+    $('#cmp').innerHTML = '';
+    schedBody.innerHTML = '';
+    toggleAll.hidden = true;
+    csvBtn.disabled = true;
+    lastState = null;
+    if (chart){ chart.destroy(); chart = null; }
+  }
+
+  /* ============ RENDER ============ */
+
+  function renderCards(chosen, base){
+    $('#r-saldo').textContent = fmtBRL(chosen.initial);
+
+    if (chosen.finished && chosen.months > 0){
+      $('#r-tempo').textContent = fmtMonths(chosen.months);
+      $('#r-data').textContent = 'quitação prevista: ' + futureDate(chosen.months);
+    } else if (chosen.months > 0){
+      $('#r-tempo').textContent = '+50 anos';
+      $('#r-data').textContent = 'com esses valores a dívida não quita';
+    } else {
+      $('#r-tempo').textContent = '—';
+      $('#r-data').textContent = '';
+    }
+
+    $('#r-juros').textContent = fmtBRL(chosen.totalInterest);
+    $('#r-pago').textContent  = fmtBRL(chosen.totalPaid);
+
+    if (base && base.finished && chosen.finished){
+      var economia = base.totalInterest - chosen.totalInterest;
+      if (economia > 0.5){
+        $('#r-economia').textContent = fmtBRL(economia);
+        $('#r-economia-sub').textContent = 'e ' + (base.months - chosen.months) +
+          (base.months - chosen.months === 1 ? ' mês a menos' : ' meses a menos');
+      } else {
+        $('#r-economia').textContent = fmtBRL(0);
+        $('#r-economia-sub').textContent = 'o valor extra já não faz diferença';
+      }
+    } else if (!base || !base.finished){
+      $('#r-economia').textContent = '—';
+      $('#r-economia-sub').textContent = 'pagando só o mínimo, a dívida não quita em 50 anos';
+    } else {
+      $('#r-economia').textContent = '—';
+      $('#r-economia-sub').textContent = '';
+    }
+  }
+
+  function renderComparison(av, sn){
+    function mini(titulo, res){
+      var prazo = res.finished ? fmtMonths(res.months) : 'não quita em 50 anos';
+      return '<div class="lbl">' + titulo + '</div>' +
+             '<div class="big">' + esc(prazo) + '</div>' +
+             '<div class="sm">juros: ' + fmtBRL(res.totalInterest) + '</div>';
+    }
+
+    var melhorAv;
+    if (av.finished && !sn.finished) melhorAv = true;
+    else if (!av.finished && sn.finished) melhorAv = false;
+    else melhorAv = av.totalInterest <= sn.totalInterest;
+
+    $('#cmp').innerHTML =
+      '<div class="cmp-card' + (melhorAv ? ' best' : '') + '">' +
+        mini('Avalanche · maior juros primeiro', av) +
+        (melhorAv ? '<span class="badge">Mais econômica</span>' : '') +
+      '</div>' +
+      '<div class="cmp-card' + (!melhorAv ? ' best' : '') + '">' +
+        mini('Bola de neve · menor saldo primeiro', sn) +
+        (!melhorAv ? '<span class="badge">Mais econômica</span>' : '') +
+      '</div>';
+  }
+
+  function renderTable(res){
+    var rows = res.rows;
+    var limit = showAllMonths ? rows.length : Math.min(rows.length, 24);
+    var html = '';
+    for (var i = 0; i < limit; i++){
+      var r = rows[i];
+      html += '<tr>' +
+        '<td>' + r.month + '</td>' +
+        '<td>' + fmtBRL(r.paid) + '</td>' +
+        '<td class="neg">' + fmtBRL(r.interest) + '</td>' +
+        '<td class="' + (r.principal >= 0 ? 'pos' : 'neg') + '">' + fmtBRL(r.principal) + '</td>' +
+        '<td><strong>' + fmtBRL(r.balance) + '</strong></td>' +
+      '</tr>';
+    }
+    schedBody.innerHTML = html;
+
+    if (rows.length > 24){
+      toggleAll.hidden = false;
+      toggleAll.textContent = showAllMonths
+        ? 'Mostrar apenas os primeiros 24 meses'
+        : 'Mostrar todos os ' + rows.length + ' meses';
+    } else {
+      toggleAll.hidden = true;
+    }
+  }
+
+  function renderChart(av, sn){
+    if (typeof Chart === 'undefined') return;
+    var canvas = document.getElementById('chart');
+    if (!canvas) return;
+
+    var len = Math.max(av.history.length, sn.history.length);
+    var labels = [];
+    for (var i = 0; i < len; i++) labels.push(i);
+
+    function pad(arr){
+      var out = arr.slice();
+      while (out.length < len) out.push(null);
+      return out;
+    }
+
+    if (chart) chart.destroy();
+    chart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Avalanche',
+            data: pad(av.history),
+            borderColor: '#38e0a8',
+            backgroundColor: 'rgba(56,224,168,.12)',
+            borderWidth: 2,
+            fill: true,
+            tension: .25,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            spanGaps: false
+          },
+          {
+            label: 'Bola de neve',
+            data: pad(sn.history),
+            borderColor: '#4aa8ff',
+            backgroundColor: 'rgba(74,168,255,.10)',
+            borderWidth: 2,
+            fill: true,
+            tension: .25,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            spanGaps: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: { color: '#93a4c4', boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 16 }
+          },
+          tooltip: {
+            backgroundColor: '#0d1526',
+            borderColor: '#22304e',
+            borderWidth: 1,
+            titleColor: '#e8eefc',
+            bodyColor: '#c6d4ee',
+            padding: 11,
+            callbacks: {
+              title: function(items){
+                return items.length ? (items[0].label === '0' ? 'Hoje' : items[0].label + ' meses') : '';
+              },
+              label: function(ctx){
+                if (ctx.parsed.y === null || ctx.parsed.y === undefined) return null;
+                return ctx.dataset.label + ': ' + fmtBRL(ctx.parsed.y);
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#6f81a4', maxTicksLimit: 12, font: { size: 11 } },
+            grid: { color: 'rgba(255,255,255,.045)' },
+            title: { display: true, text: 'meses', color: '#6f81a4', font: { size: 11 } }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: '#6f81a4',
+              font: { size: 11 },
+              callback: function(v){
+                if (v >= 1000) return 'R$ ' + (v/1000).toFixed(v >= 10000 ? 0 : 1) + 'k';
+                return 'R$ ' + v;
+              }
+            },
+            grid: { color: 'rgba(255,255,255,.045)' }
+          }
+        }
+      }
+    });
+  }
+
+  /* ============ CÁLCULO PRINCIPAL ============ */
+
+  function recalc(){
+    var data = readInputs();
+
+    if (data.errs.length){
+      showMessages(data.errs, data.warns);
+      clearResults();
+      return;
+    }
+
+    showMessages([], data.warns);
+
+    var av   = simulate(data.debts, data.extra, 'avalanche');
+    var sn   = simulate(data.debts, data.extra, 'snowball');
+    var base = simulate(data.debts, 0, 'avalanche');
+    var chosen = strategyEl.value === 'snowball' ? sn : av;
+
+    lastState = { chosen: chosen, av: av, sn: sn, base: base, debts: data.debts, extra: data.extra };
+
+    renderCards(chosen, base);
+    renderComparison(av, sn);
+    renderChart(av, sn);
+    renderTable(chosen);
+
+    csvBtn.disabled = false;
+
+    if (!chosen.finished){
+      showMessages([], data.warns.concat([
+        'Com o valor extra informado, o plano não quita as dívidas em 50 anos. Aumente o valor extra mensal ou negocie juros menores.'
+      ]));
+    }
+  }
+
+  /* ============ CSV ============ */
+
+  function downloadCSV(){
+    if (!lastState) return;
+    var res = lastState.chosen;
+    var stratName = strategyEl.value === 'snowball'
+      ? 'Bola de neve (menor saldo primeiro)'
+      : 'Avalanche (maior juros primeiro)';
+
+    var lines = [];
+    lines.push('Plano de quitacao - Quitai');
+    lines.push('Estrategia;' + stratName);
+    lines.push('Saldo inicial;' + csvNum(res.initial));
+    lines.push('Valor extra mensal;' + csvNum(lastState.extra));
+    lines.push('Meses para quitar;' + (res.finished ? res.months : 'Nao quita em 50 anos'));
+    lines.push('Juros totais;' + csvNum(res.totalInterest));
+    lines.push('Total desembolsado;' + csvNum(res.totalPaid));
+    lines.push('');
+    lines.push('Mes;Valor pago;Juros;Abatimento;Saldo devedor');
+    for (var i = 0; i < res.rows.length; i++){
+      var r = res.rows[i];
+      lines.push([r.month, csvNum(r.paid), csvNum(r.interest), csvNum(r.principal), csvNum(r.balance)].join(';'));
+    }
+
+    var csv = '\uFEFF' + lines.join('\r\n');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'plano-quitacao-quitai.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1200);
+  }
+
+  /* ============ EVENTOS ============ */
+
+  $('#addDebt').addEventListener('click', function(){
+    addDebtRow();
+    var last = $$('.debt-row', debtsEl).pop();
+    if (last) $('.d-name', last).focus();
+    recalc();
+  });
+
+  extraEl.addEventListener('input', recalc);
+  strategyEl.addEventListener('change', recalc);
+
+  toggleAll.addEventListener('click', function(){
+    showAllMonths = !showAllMonths;
+    if (!lastState) return;
+    renderTable(lastState.chosen);
+  });
+
+  csvBtn.addEventListener('click', downloadCSV);
+
+  /* ============ INICIALIZAÇÃO ============ */
+
+  function init(){
+    addDebtRow({ name: 'Cartão de crédito', bal: '4800', rate: '12', min: '480' });
+    addDebtRow({ name: 'Empréstimo pessoal', bal: '7200', rate: '3,5', min: '400' });
+    addDebtRow({ name: 'Parcelamento da loja', bal: '1200', rate: '2', min: '150' });
+    recalc();
+  }
+
+  init();
+})();
+</script>
+<footer style="margin-top:24px;padding:14px;border-top:1px solid #334155;color:#94a3b8;font-size:12px;text-align:center;">Como usar: abra este arquivo em qualquer navegador (Chrome, Firefox, Safari ou Edge). Funciona offline, sem instalar nada. Guarde o arquivo no seu computador.</footer></body>
+</html>
