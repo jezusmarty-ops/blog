@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MetaFlow — Planejador de Metas Financeiras</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#070c17;
+    --panel:#101a2c;
+    --panel2:#16223a;
+    --line:#233350;
+    --txt:#e8eefb;
+    --muted:#94a6c4;
+    --accent:#2fe0b0;
+    --accent2:#4ea8ff;
+    --warn:#ffbf5e;
+    --danger:#ff6b7f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(900px 560px at 8% -12%, rgba(24,72,140,.55) 0%, transparent 62%),
+      radial-gradient(760px 480px at 102% 0%, rgba(16,120,110,.42) 0%, transparent 58%),
+      var(--bg);
+    color:var(--txt);
+    min-height:100vh;
+    padding:24px 14px 64px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px;margin:0 auto}
+
+  /* HERO */
+  .hero{margin-bottom:18px}
+  .badge{
+    display:inline-block;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;
+    font-weight:700;color:#0b2a24;background:linear-gradient(135deg,#2fe0b0,#6fe3ff);
+    padding:6px 12px;border-radius:999px;margin-bottom:14px;
+  }
+  h1{font-size:clamp(1.5rem,3.6vw,2.3rem);margin:0 0 8px;letter-spacing:-.02em;line-height:1.15}
+  h1 span{color:var(--muted);font-weight:500;font-size:.62em;display:block;margin-top:6px}
+  .sub{margin:0;color:var(--muted);max-width:680px;font-size:.95rem}
+
+  /* CARDS */
+  .card{
+    background:linear-gradient(180deg,var(--panel) 0%,#0d1626 100%);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:18px;
+    box-shadow:0 10px 30px -18px rgba(0,0,0,.9);
+  }
+  .card + .card{margin-top:14px}
+
+  /* COMO USAR */
+  .como-usar{margin-bottom:18px;border-color:#1e4b4a;background:linear-gradient(180deg,#0d2027 0%,#0b1620 100%)}
+  .como-usar h2{margin:0 0 10px;font-size:1rem;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+  .como-usar ol{margin:0;padding-left:20px;color:#cfdcf1;font-size:.92rem}
+  .como-usar li{margin-bottom:6px}
+  .hint{
+    margin:12px 0 0;font-size:.82rem;color:var(--warn);
+    background:rgba(255,191,94,.08);border:1px dashed rgba(255,191,94,.35);
+    padding:9px 12px;border-radius:10px;
+  }
+
+  /* LAYOUT */
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start}
+  @media (max-width:880px){
+    .grid{grid-template-columns:1fr}
+  }
+
+  /* CAMPOS */
+  .campo{display:block;margin-bottom:14px}
+  .campo > span{display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px;font-weight:600;letter-spacing:.01em}
+  input[type=text]{
+    width:100%;padding:12px 14px;border-radius:11px;
+    background:#0a1220;border:1px solid var(--line);color:var(--txt);
+    font-size:1rem;font-family:inherit;transition:.18s;outline:none;
+  }
+  input[type=text]:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(78,168,255,.16);background:#0c1526}
+  input::placeholder{color:#5a6c8c}
+
+  .seg{display:flex;background:#0a1220;border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin:4px 0 16px}
+  .seg-btn{
+    flex:1;padding:10px 8px;border:0;border-radius:9px;background:transparent;
+    color:var(--muted);font-weight:700;font-size:.82rem;cursor:pointer;
+    font-family:inherit;transition:.18s;
+  }
+  .seg-btn:hover{color:#cfe0f7}
+  .seg-btn.ativo{background:linear-gradient(135deg,#12b981,#0e7490);color:#eafff9;box-shadow:0 6px 16px -8px #12b981}
+
+  .erros{margin-top:4px;display:flex;flex-direction:column;gap:8px}
+  .erro{
+    font-size:.82rem;color:#ffd5dc;background:rgba(255,107,127,.1);
+    border:1px solid rgba(255,107,127,.35);border-radius:10px;padding:9px 12px;
+  }
+  .erro b{color:#fff}
+
+  /* RESULTADOS */
+  .destaque{
+    background:linear-gradient(135deg,#0f2c33 0%,#101f3a 100%);
+    border-color:#1f5e5c;
+    text-align:center;padding:24px 18px;
+  }
+  .rotulo{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700;margin-bottom:8px}
+  .destaque .valor{
+    font-size:clamp(1.7rem,5vw,2.5rem);font-weight:800;letter-spacing:-.02em;
+    background:linear-gradient(120deg,#3ff0bb,#79c8ff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    line-height:1.15;word-break:break-word;
+  }
+  .destaque-sub{margin-top:10px;font-size:.86rem;color:#b9cbe6}
+  .destaque-sub b{color:#eafff9}
+
+  .cards-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  @media (max-width:620px){.cards-mini{grid-template-columns:1fr}}
+  .mini{padding:14px}
+  .valor-mini{font-size:1.08rem;font-weight:700;color:#dff3ff;word-break:break-word}
+  .mini .rotulo{margin-bottom:5px;font-size:.68rem}
+
+  /* PROGRESSO */
+  .progresso-top{display:flex;justify-content:space-between;font-size:.83rem;color:var(--muted);margin-bottom:9px;font-weight:600}
+  .progresso-top span:last-child{color:var(--accent);font-weight:800}
+  .barra{height:12px;border-radius:999px;background:#0a1220;border:1px solid var(--line);overflow:hidden}
+  .barra-fill{
+    height:100%;width:0%;border-radius:999px;
+    background:linear-gradient(90deg,#12b981,#4ea8ff);
+    transition:width .45s cubic-bezier(.4,0,.2,1);
+  }
+  .progresso-legenda{margin-top:9px;font-size:.82rem;color:var(--muted)}
+
+  /* GRÁFICO */
+  .grafico-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .grafico-top h3{margin:0;font-size:.95rem;letter-spacing:.02em;color:#d5e4f8}
+  .btn-csv{
+    border:1px solid #2a5f8f;background:rgba(78,168,255,.1);color:#8fcaff;
+    padding:9px 14px;border-radius:10px;font-weight:700;font-size:.8rem;cursor:pointer;
+    font-family:inherit;transition:.18s;white-space:nowrap;
+  }
+  .btn-csv:hover{background:rgba(78,168,255,.22);color:#cce9ff;border-color:#4ea8ff}
+  .grafico-wrap{position:relative;height:310px;transition:opacity .3s}
+  .grafico-wrap.off{opacity:.22}
+  .aviso{font-size:.82rem;color:var(--warn);margin-top:10px}
+  .rodape{margin-top:18px;text-align:center;font-size:.76rem;color:#5f7194}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="badge">Ferramenta gratuita · Finanças pessoais</div>
+    <h1>MetaFlow <span>Planejador de metas financeiras com juros compostos</span></h1>
+    <p class="sub">Descubra quanto precisa guardar por mês para atingir sua meta — ou em quanto tempo você chega lá com o aporte que já pode fazer.</p>
+  </header>
+
+  <section class="card como-usar">
+    <h2>Como usar</h2>
+    <ol>
+      <li>Digite o <b>valor da meta</b> (ex.: 50.000,00) e, se já tiver algo guardado, coloque em <b>“Já tenho guardado”</b>.</li>
+      <li>Informe a <b>rentabilidade anual estimada</b> do investimento — ex.: 6% na poupança, 11% no Tesouro Selic/CDB, 8% numa carteira conservadora.</li>
+      <li>Escolha o modo: <b>“Tenho um prazo”</b> para saber o aporte mensal necessário, ou <b>“Tenho um aporte”</b> para saber em quanto tempo a meta é atingida.</li>
+      <li>Os resultados e o gráfico recalculam automaticamente a cada digitação. Clique em <b>Baixar CSV</b> para salvar o plano mês a mês.</li>
+    </ol>
+    <p class="hint">💡 Aceita vírgula ou ponto nos decimais (ex.: 1500,50 ou 1500.50). A rentabilidade é apenas uma estimativa: rentabilidade passada não garante resultado futuro.</p>
+  </section>
+
+  <div class="grid">
+
+    <!-- FORMULÁRIO -->
+    <section class="card">
+      <label class="campo">
+        <span>Nome da meta (opcional)</span>
+        <input id="nome" type="text" placeholder="Ex.: Entrada do apartamento" maxlength="46">
+      </label>
+
+      <label class="campo">
+        <span>Valor da meta (R$)</span>
+        <input id="meta" type="text" inputmode="decimal" placeholder="50000,00" autocomplete="off">
+      </label>
+
+      <label class="campo">
+        <span>Já tenho guardado (R$)</span>
+        <input id="atual" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off">
+      </label>
+
+      <label class="campo">
+        <span>Rentabilidade anual estimada (%)</span>
+        <input id="taxa" type="text" inputmode="decimal" value="10" autocomplete="off">
+      </label>
+
+      <div class="seg" role="tablist" aria-label="Modo de cálculo">
+        <button type="button" class="seg-btn ativo" data-modo="prazo">Tenho um prazo</button>
+        <button type="button" class="seg-btn" data-modo="aporte">Tenho um aporte</button>
+      </div>
+
+      <div id="campoPrazo">
+        <label class="campo">
+          <span>Prazo desejado (meses)</span>
+          <input id="meses" type="text" inputmode="numeric" value="24" autocomplete="off">
+        </label>
+      </div>
+
+      <div id="campoAporte" style="display:none">
+        <label class="campo">
+          <span>Aporte mensal (R$)</span>
+          <input id="aporte" type="text" inputmode="decimal" value="800" autocomplete="off">
+        </label>
+      </div>
+
+      <div id="erros" class="erros"></div>
+    </section>
+
+    <!-- RESULTADOS -->
+    <section>
+      <div class="card destaque">
+        <div class="rotulo" id="destaqueRotulo">Aporte mensal necessário</div>
+        <div class="valor" id="destaqueValor">—</div>
+        <div class="destaque-sub" id="destaqueSub">Preencha o valor da sua meta para começar.</div>
+      </div>
+
+      <div class="cards-mini">
+        <div class="card mini">
+          <div class="rotulo">Você investe do bolso</div>
+          <div class="valor-mini" id="outInvestido">—</div>
+        </div>
+        <div class="card mini">
+          <div class="rotulo">Rendimento (juros)</div>
+          <div class="valor-mini" id="outJuros">—</div>
+        </div>
+        <div class="card mini">
+          <div class="rotulo">Valor final projetado</div>
+          <div class="valor-mini" id="outFinal">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="progresso-top">
+          <span>Progresso atual em relação à meta</span>
+          <span id="progressoTxt">0%</span>
+        </div>
+        <div class="barra"><div class="barra-fill" id="barraFill"></div></div>
+        <div class="progresso-legenda" id="progressoLegenda">—</div>
+      </div>
+
+      <div class="card">
+        <div class="grafico-top">
+          <h3>Evolução do plano</h3>
+          <button type="button" class="btn-csv" id="btnCsv">⬇ Baixar CSV</button>
+        </div>
+        <div class="grafico-wrap" id="graficoWrap">
+          <canvas id="grafico"></canvas>
+        </div>
+        <div id="semChart" class="aviso" style="display:none">Gráfico indisponível (não foi possível carregar a biblioteca). Os números abaixo continuam corretos.</div>
+      </div>
+    </section>
+
+  </div>
+
+  <p class="rodape">MetaFlow · simulação informativa, não constitui recomendação de investimento.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Helpers de formatação ---------- */
+  var fmtBRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  var fmtPct = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+
+  function brl(v){
+    return (typeof v === 'number' && isFinite(v)) ? fmtBRL.format(v) : '—';
+  }
+  function br(v){ // número para CSV
+    return (typeof v === 'number' && isFinite(v)) ? v.toFixed(2).replace('.',',') : '0,00';
+  }
+  function compacto(v){
+    if(!isFinite(v)) return '';
+    if(Math.abs(v) >= 1000000) return 'R$ ' + (v/1000000).toFixed(1).replace('.',',') + ' mi';
+    if(Math.abs(v) >= 1000) return 'R$ ' + (v/1000).toFixed(0) + ' mil';
+    return 'R$ ' + v.toFixed(0);
+  }
+
+  /* ---------- Parser numérico tolerante (vírgula ou ponto) ---------- */
+  function parseNum(raw){
+    if(raw === null || raw === undefined) return NaN;
+    var s = String(raw).trim();
+    if(s === '') return NaN;
+    s = s.replace(/R\$/gi,'').replace(/%/g,'').replace(/\s|_/g,'');
+    if(!/^[+-]?[\d.,]+$/.test(s)) return NaN;
+
+    var hasComma = s.indexOf(',') > -1;
+    var hasDot   = s.indexOf('.') > -1;
+
+    if(hasComma && hasDot){
+      if(s.lastIndexOf(',') > s.lastIndexOf('.')){
+        s = s.replace(/\./g,'').replace(/,/g,'.');
+      }else{
+        s = s.replace(/,/g,'');
+      }
+    }else if(hasComma){
+      var pc = s.split(',');
+      if(pc.length > 2) s = pc.join('');
+      else s = s.replace(',', '.');
+    }else if(hasDot){
+      if(/^\d{1,3}(\.\d{3})+$/.test(s)){
+        s = s.replace(/\./g,'');
+      }else{
+        var pd = s.split('.');
+        if(pd.length > 2){
+          var last = pd[pd.length-1];
+          if(last.length <= 2) s = pd.slice(0,-1).join('') + '.' + last;
+          else s = pd.join('');
+        }
+      }
+    }
+    var n = Number(s);
+    return isFinite(n) ? n : NaN;
+  }
+
+  /* ---------- Datas ---------- */
+  var HOJE = new Date();
+  function addMeses(base, n){
+    var y = base.getFullYear();
+    var m = base.getMonth() + n;
+    var d = base.getDate();
+    var r = new Date(y, m, 1);
+    var ultimo = new Date(y, m+1, 0).getDate();
+    r.setDate(Math.min(d, ultimo));
+    return r;
+  }
+  function dataBR(offsetMeses){
+    return addMeses(HOJE, offsetMeses).toLocaleDateString('pt-BR');
+  }
+  function labelMes(offsetMeses){
+    var d = addMeses(HOJE, offsetMeses);
+    return d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}).replace('.','');
+  }
+  function humanizaMeses(m){
+    m = Math.round(m);
+    if(m <= 0) return '0 meses';
+    if(m < 12) return m + (m === 1 ? ' mês' : ' meses');
+    var a = Math.floor(m/12), r = m % 12;
+    var s = a + (a === 1 ? ' ano' : ' anos');
+    if(r) s += ' e ' + r + (r === 1 ? ' mês' : ' meses');
+    return s;
+  }
+
+  /* ---------- Elementos ---------- */
+  var els = {
+    nome: document.getElementById('nome'),
+    meta: document.getElementById('meta'),
+    atual: document.getElementById('atual'),
+    taxa: document.getElementById('taxa'),
+    meses: document.getElementById('meses'),
+    aporte: document.getElementById('aporte'),
+    campoPrazo: document.getElementById('campoPrazo'),
+    campoAporte: document.getElementById('campoAporte'),
+    erros: document.getElementById('erros'),
+    destaqueRotulo: document.getElementById('destaqueRotulo'),
+    destaqueValor: document.getElementById('destaqueValor'),
+    destaqueSub: document.getElementById('destaqueSub'),
+    outInvestido: document.getElementById('outInvestido'),
+    outJuros: document.getElementById('outJuros'),
+    outFinal: document.getElementById('outFinal'),
+    progressoTxt: document.getElementById('progressoTxt'),
+    barraFill: document.getElementById('barraFill'),
+    progressoLegenda: document.getElementById('progressoLegenda'),
+    graficoWrap: document.getElementById('graficoWrap'),
+    btnCsv: document.getElementById('btnCsv')
+  };
+
+  var modo = 'prazo';
+  var chart = null;
+  var ultimoPlano = null;
+
+  /* ---------- Cálculos ---------- */
+  function construirPontos(n, pv, pmt, i){
+    var pts = [{ m:0, total:pv, aporteCum:pv }];
+    var total = pv, ap = pv;
+    for(var m = 1; m <= n; m++){
+      total = total * (1 + i) + pmt;
+      ap += pmt;
+      pts.push({ m:m, total:total, aporteCum:ap });
+    }
+    return pts;
+  }
+
+  function amostrar(pts, max){
+    if(pts.length <= max) return pts;
+    var passo = Math.ceil(pts.length / max);
+    var out = [];
+    for(var k = 0; k < pts.length; k += passo) out.push(pts[k]);
+    if(out[out.length-1] !== pts[pts.length-1]) out.push(pts[pts.length-1]);
+    return out;
+  }
+
+  function limpar(){
+    els.erros.innerHTML = '';
+    els.destaqueValor.textContent = '—';
+    els.destaqueSub.textContent = 'Corrija os campos destacados para ver o resultado.';
+    els.outInvestido.textContent = '—';
+    els.outJuros.textContent = '—';
+    els.outFinal.textContent = '—';
+    els.progressoTxt.textContent = '0%';
+    els.barraFill.style.width = '0%';
+    els.progressoLegenda.textContent = '—';
+    els.graficoWrap.classList.add('off');
+    ultimoPlano = null;
+    if(chart){
+      chart.data.labels = [];
+      chart.data.datasets[0].data = [];
+      chart.data.datasets[1].data = [];
+      chart.update();
+    }
+  }
+
+  function mostrarErros(lista){
+    els.erros.innerHTML = lista.map(function(t){
+      return '<div class="erro">⚠ ' + t + '</div>';
+    }).join('');
+  }
+
+  /* ---------- Render principal ---------- */
+  function render(){
+    var meta = parseNum(els.meta.value);
+    var atualRaw = els.atual.value.trim();
+    var atual = (atualRaw === '') ? 0 : parseNum(atualRaw);
+    var taxaAnual = parseNum(els.taxa.value);
+    var erros = [];
+
+    if(!(isFinite(meta) && meta > 0)){
+      erros.push('Informe o <b>valor da meta</b> — precisa ser um número maior que zero (ex.: 50000).');
+    }
+    if(atualRaw !== '' && !(isFinite(atual) && atual >= 0)){
+      erros.push('O campo <b>“Já tenho guardado”</b> deve ser zero ou um valor positivo.');
+    }
+    if(!isFinite(atual) || atual < 0) atual = 0;
+
+    if(!(isFinite(taxaAnual) && taxaAnual >= 0 && taxaAnual <= 100)){
+      erros.push('A <b>rentabilidade anual</b> deve ser um número entre 0 e 100 (ex.: 10).');
+    }
+
+    var mesesInput = 0, aporteInput = 0;
+    if(modo === 'prazo'){
+      mesesInput = parseNum(els.meses.value);
+      if(!(isFinite(mesesInput) && Number.isInteger(mesesInput) && mesesInput >= 1 && mesesInput <= 600)){
+        erros.push('O <b>prazo</b> deve ser um número inteiro de meses entre 1 e 600.');
+      }
+    }else{
+      aporteInput = parseNum(els.aporte.value);
+      if(!(isFinite(aporteInput) && aporteInput > 0)){
+        erros.push('Informe um <b>aporte mensal</b> maior que zero (ex.: 800).');
+      }
+    }
+
+    if(erros.length){
+      mostrarErros(erros);
+      limpar();
+      return;
+    }
+
+    els.erros.innerHTML = '';
+
+    var i = Math.pow(1 + taxaAnual/100, 1/12) - 1;
+
+    var pmt = 0;        // aporte mensal usado no plano
+    var nPlano = 0;     // meses usados no plano
+    var nExato = 0;     // meses exatos (modo aporte)
+    var jaAlcancada = (meta <= atual);
+    var extraSub = '';
+
+    if(modo === 'prazo'){
+      nPlano = mesesInput;
+      nExato = mesesInput;
+      if(jaAlcancada){
+        pmt = 0;
+      }else if(i > 0){
+        var pow = Math.pow(1 + i, nPlano);
+        pmt = (meta - atual * pow) * i / (pow - 1);
+      }else{
+        pmt = (meta - atual) / nPlano;
+      }
+      if(!isFinite(pmt) || pmt < 0) pmt = 0;
+      pmt = Math.ceil(pmt * 100) / 100; // arredonda para cima em centavos
+    }else{
+      pmt = aporteInput;
+      if(jaAlcancada){
+        nExato = 0;
+        nPlano = 0;
+      }else if(i > 0){
+        var num = meta * i + pmt;
+        var den = atual * i + pmt;
+        if(den <= 0 || num / den <= 1){
+          nExato = 0;
+        }else{
+          nExato = Math.log(num / den) / Math.log(1 + i);
+        }
+      }else{
+        nExato = (meta - atual) / pmt;
+      }
+      if(!isFinite(nExato)) nExato = 0;
+      nPlano = Math.max(0, Math.ceil(nExato - 1e-9));
+    }
+
+    var pontos = construirPontos(nPlano, atual, pmt, i);
+    var finalTotal = pontos[pontos.length - 1].total;
+    var investido = atual + pmt * nPlano;
+    var juros = finalTotal - investido;
+    if(juros < 0 && juros > -0.01) juros = 0;
+
+    /* ----- Destaque ----- */
+    if(modo === 'prazo'){
+      els.destaqueRotulo.textContent = 'Aporte mensal necessário';
+      els.destaqueValor.textContent = brl(pmt);
+      if(jaAlcancada){
+        els.destaqueSub.innerHTML = '🎉 Sua meta <b>já está alcançada</b> com o valor que você já tem. Aporte mensal necessário: <b>R$ 0,00</b>.';
+      }else{
+        els.destaqueSub.innerHTML = 'Guarde esse valor por <b>' + humanizaMeses(nPlano) + '</b> e você chega a <b>' +
+          brl(meta) + '</b> em <b>' + dataBR(nPlano) + '</b>.';
+      }
+    }else{
+      els.destaqueRotulo.textContent = 'Tempo para atingir a meta';
+      if(jaAlcancada){
+        els.destaqueValor.textContent = 'Meta atingida';
+        els.destaqueSub.innerHTML = '🎉 Você já possui <b>' + brl(atual) + '</b>, o que cobre a meta de <b>' + brl(meta) + '</b>.';
+      }else{
+        els.destaqueValor.textContent = humanizaMeses(nPlano);
+        els.destaqueSub.innerHTML = 'Com <b>' + brl(pmt) + '</b> por mês, você chega a <b>' + brl(meta) +
+          '</b> em <b>' + dataBR(nPlano) + '</b> (' + nPlano + ' meses).';
+      }
+    }
+
+    /* ----- Mini cards ----- */
+    els.outInvestido.textContent = brl(investido);
+    els.outJuros.textContent = brl(juros);
+    els.outFinal.textContent = brl(finalTotal);
+
+    /* ----- Progresso ----- */
+    var pct = meta > 0 ? Math.min(100, (atual / meta) * 100) : 0;
+    if(!isFinite(pct) || pct < 0) pct = 0;
+    els.progressoTxt.textContent = fmtPct.format(pct) + '%';
+    els.barraFill.style.width = pct + '%';
+    els.progressoLegenda.textContent = brl(atual) + ' de ' + brl(meta) + ' · faltam ' +
+      brl(Math.max(0, meta - atual)) + ' (sem contar rendimentos)';
+
+    /* ----- Gráfico ----- */
+    desenharGrafico(pontos);
+
+    /* ----- Guarda para CSV ----- */
+    ultimoPlano = {
+      pontos: pontos,
+      meta: meta,
+      pv: atual,
+      pmt: pmt,
+      taxa: taxaAnual,
+      nome: els.nome.value.trim(),
+      nPlano: nPlano
+    };
+  }
+
+  /* ---------- Gráfico ---------- */
+  function desenharGrafico(pontos){
+    var canvas = document.getElementById('grafico');
+    if(typeof Chart === 'undefined'){
+      document.getElementById('semChart').style.display = 'block';
+      els.graficoWrap.classList.add('off');
+      return;
+    }
+    document.getElementById('semChart').style.display = 'none';
+    els.graficoWrap.classList.remove('off');
+
+    var amostra = amostrar(pontos, 90);
+    var labels = amostra.map(function(p){ return labelMes(p.m); });
+    var dadosTotal = amostra.map(function(p){ return Number(p.total.toFixed(2)); });
+    var dadosAporte = amostra.map(function(p){ return Number(p.aporteCum.toFixed(2)); });
+
+    if(chart){
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = dadosTotal;
+      chart.data.datasets[1].data = dadosAporte;
+      chart.update();
+      return;
+    }
+
+    chart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Valor com rendimento',
+            data: dadosTotal,
+            borderColor: '#2fe0b0',
+            backgroundColor: 'rgba(47,224,176,.14)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+            pointHoverRadius: 5
+          },
+          {
+            label: 'Total investido do bolso',
+            data: dadosAporte,
+            borderColor: '#4ea8ff',
+            backgroundColor: 'rgba(78,168,255,.05)',
+            borderWidth: 2,
+            borderDash: [6,5],
+            fill: false,
+            tension: 0.3,
+            pointRadius: 0,
+            pointHoverRadius: 5
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#b9cbe6',
+              boxWidth: 14,
+              boxHeight: 3,
+              font: { size: 12 }
+            }
+          },
+          tooltip: {
+            backgroundColor: '#0d1728',
+            borderColor: '#233350',
+            borderWidth: 1,
+            titleColor: '#e8eefb',
+            bodyColor: '#c8d8f0',
+            padding: 10,
+            callbacks: {
+              label: function(ctx){
+                return ' ' + ctx.dataset.label + ': ' + brl(ctx.parsed.y);
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(35,51,80,.55)' },
+            ticks: { color: '#7d90af', maxTicksLimit: 8, font: { size: 11 } }
+          },
+          y: {
+            grid: { color: 'rgba(35,51,80,.55)' },
+            ticks: {
+              color: '#7d90af',
+              font: { size: 11 },
+              callback: function(v){ return compacto(v); }
+            },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  /* ---------- CSV ---------- */
+  els.btnCsv.addEventListener('click', function(){
+    if(!ultimoPlano) return;
+    var p = ultimoPlano;
+    var linhas = [];
+    linhas.push('MetaFlow - Plano de metas financeiras');
+    linhas.push('Meta;' + (p.nome ? p.nome.replace(/;/g,',') : 'Minha meta'));
+    linhas.push('Valor da meta;' + br(p.meta));
+    linhas.push('Valor inicial;' + br(p.pv));
+    linhas.push('Aporte mensal;' + br(p.pmt));
+    linhas.push('Rentabilidade anual estimada;' + p.taxa.toFixed(2).replace('.',',') + '%');
+    linhas.push('Prazo do plano (meses);' + p.nPlano);
+    linhas.push('Gerado em;' + new Date().toLocaleString('pt-BR'));
+    linhas.push('');
+    linhas.push('Mes;Data;Aporte do mes;Total investido;Rendimento acumulado;Valor projetado');
+
+    p.pontos.forEach(function(pt){
+      var aporteMes = (pt.m === 0) ? p.pv : p.pmt;
+      var rend = pt.total - pt.aporteCum;
+      if(rend < 0) rend = 0;
+      linhas.push([
+        pt.m,
+        dataBR(pt.m),
+        br(aporteMes),
+        br(pt.aporteCum),
+        br(rend),
+        br(pt.total)
+      ].join(';'));
+    });
+
+    var csv = '\uFEFF' + linhas.join('\r\n');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var slug = (p.nome || 'minha-meta').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,30) || 'meta';
+    a.href = url;
+    a.download = 'metaflow-' + slug + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1200);
+  });
+
+  /* ---------- Alternância de modo ---------- */
+  var botoes = document.querySelectorAll('.seg-btn');
+  for(var b = 0; b < botoes.length; b++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        modo = btn.getAttribute('data-modo');
+        for(var k = 0; k < botoes.length; k++){
+          botoes[k].classList.toggle('ativo', botoes[k] === btn);
+        }
+        els.campoPrazo.style.display = (modo === 'prazo') ? '' : 'none';
+        els.campoAporte.style.display = (modo === 'aporte') ? '' : 'none';
+        render();
+      });
+    })(botoes[b]);
+  }
+
+  /* ---------- Listeners ---------- */
+  var campos = [els.meta, els.atual, els.taxa, els.meses, els.aporte, els.nome];
+  for(var c = 0; c < campos.length; c++){
+    campos[c].addEventListener('input', render);
+    campos[c].addEventListener('change', render);
+  }
+  campos.forEach && campos.forEach(function(el){
+    el.addEventListener('blur', function(){
+      // nada: mantém o texto digitado pelo usuário
+    });
+  });
+
+  /* ---------- Início ---------- */
+  render();
+})();
+</script>
+<footer style="margin-top:24px;padding:14px;border-top:1px solid #334155;color:#94a3b8;font-size:12px;text-align:center;">Como usar: abra este arquivo em qualquer navegador (Chrome, Firefox, Safari ou Edge). Funciona offline, sem instalar nada. Guarde o arquivo no seu computador.</footer></body>
+</html>
