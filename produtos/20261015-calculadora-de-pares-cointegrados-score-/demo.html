@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-src 'self'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Calculadora de Pares Cointegrados — Score de Arbitragem Estatística (demonstração)</title>
+<style>
+body{background:#0f172a;color:#e2e8f0;font-family:system-ui,sans-serif;margin:0;padding:12px 16px}
+a{color:#fbbf24} iframe{width:100%;height:80vh;border:1px solid #334155;border-radius:12px;background:#0f172a}
+</style>
+</head>
+<body>
+<p><a href="./">&larr; Conheça a versão completa de Calculadora de Pares Cointegrados — Score de Arbitragem Estatística</a></p>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Demonstração"
+ srcdoc="&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27;; style-src &#x27;unsafe-inline&#x27;; img-src data:; font-src data:; connect-src &#x27;none&#x27;; form-action &#x27;none&#x27;; base-uri &#x27;none&#x27;; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;&quot;&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;Calculadora de Pares Cointegrados (demonstração)&lt;/title&gt;
+&lt;style&gt;
+body{background:#12151c;color:#e6e9ef;font-family:system-ui,Arial,sans-serif;margin:0;padding:24px;display:flex;justify-content:center}
+.card{background:#1b2029;border:1px solid #2c3340;border-radius:12px;padding:22px;max-width:520px;width:100%}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{font-size:12px;color:#8b94a5;margin:0 0 18px}
+label{display:block;font-size:13px;margin:12px 0 4px;color:#aab3c2}
+input{width:100%;box-sizing:border-box;background:#0f1319;border:1px solid #2c3340;color:#e6e9ef;border-radius:8px;padding:9px;font-size:14px}
+button{width:100%;margin-top:18px;padding:11px;border:0;border-radius:8px;background:#3b82f6;color:#fff;font-size:15px;cursor:pointer}
+button:hover{background:#2f6fd6}
+.out{margin-top:18px;background:#0f1319;border:1px solid #2c3340;border-radius:8px;padding:14px;font-size:14px;line-height:1.7}
+.out b{color:#7dd3fc}
+.score{font-size:26px;font-weight:700;color:#4ade80}
+.warn{font-size:11px;color:#8b94a5;margin-top:14px}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;div style=&quot;position:sticky;top:0;z-index:9;background:#f59e0b;color:#111;padding:8px;text-align:center;font:600 14px sans-serif&quot;&gt;DEMONSTRAÇÃO — versão limitada.&lt;/div&gt;
+&lt;div class=&quot;card&quot;&gt;
+&lt;h1&gt;Calculadora de Pares Cointegrados&lt;/h1&gt;
+&lt;p class=&quot;sub&quot;&gt;Demonstração — estimativa educativa, não é recomendação financeira.&lt;/p&gt;
+&lt;label&gt;Série do ativo A (preços separados por vírgula)&lt;/label&gt;
+&lt;input id=&quot;a&quot; value=&quot;100,102,101,105,107,106,110,112,111,115,117,116,120,122,121,125&quot;&gt;
+&lt;label&gt;Série do ativo B (preços separados por vírgula)&lt;/label&gt;
+&lt;input id=&quot;b&quot; value=&quot;50,51,50.5,52,53,52.5,54,55,54.5,56,57,56.5,58,59,58.5,60&quot;&gt;
+&lt;label&gt;Z-score atual do spread&lt;/label&gt;
+&lt;input id=&quot;z&quot; value=&quot;1.8&quot;&gt;
+&lt;button id=&quot;go&quot;&gt;Calcular score&lt;/button&gt;
+&lt;div class=&quot;out&quot; id=&quot;out&quot;&gt;Preencha os dados e clique em calcular.&lt;/div&gt;
+&lt;div class=&quot;warn&quot;&gt;Resultados são estimativas estatísticas e não garantem ganho.&lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+function parse(s){return s.split(&quot;,&quot;).map(function(x){return parseFloat(x.trim())}).filter(function(x){return isFinite(x)})}
+function mean(v){var s=0;for(var i=0;i&lt;v.length;i++)s+=v[i];return s/v.length}
+function beta(x,y){var mx=mean(x),my=mean(y),num=0,den=0;for(var i=0;i&lt;x.length;i++){num+=(x[i]-mx)*(y[i]-my);den+=(x[i]-mx)*(x[i]-mx)}return den===0?0:num/den}
+document.getElementById(&quot;go&quot;).onclick=function(){
+var A=parse(document.getElementById(&quot;a&quot;).value);
+var B=parse(document.getElementById(&quot;b&quot;).value);
+var z=parseFloat(document.getElementById(&quot;z&quot;).value);
+var n=Math.min(A.length,B.length);
+var out=document.getElementById(&quot;out&quot;);
+if(n&lt;6||!isFinite(z)){out.innerHTML=&quot;Informe ao menos 6 pontos em cada série e um z-score válido.&quot;;return}
+A=A.slice(0,n);B=B.slice(0,n);
+var b=beta(A,B);
+var sp=[];
+for(var i=0;i&lt;n;i++)sp.push(A[i]-b*B[i]);
+var ms=mean(sp);
+var d=[];
+for(var i=1;i&lt;n;i++)d.push(sp[i]-sp[i-1]);
+var md=mean(d);
+var num=0,den=0;
+for(var i=1;i&lt;n;i++){num+=(sp[i-1]-ms)*(d[i-1]-md);den+=(sp[i-1]-ms)*(sp[i-1]-ms)}
+var rho=den===0?0:num/den;
+var hl=rho&lt;0?-Math.log(2)/rho:Infinity;
+var sd=0;
+for(var i=0;i&lt;n;i++)sd+=(sp[i]-ms)*(sp[i]-ms);
+sd=Math.sqrt(sd/n);
+var zc=sd===0?0:(sp[n-1]-ms)/sd;
+var adf=rho&lt;0?-rho*n:0;
+var s=0;
+s+=Math.min(40,Math.max(0,adf*40));
+s+=Math.min(30,Math.abs(z)*12);
+s+=hl&gt;0&amp;&amp;hl&lt;20?Math.max(0,30-hl*1.5):0;
+s=Math.round(Math.min(100,Math.max(0,s)));
+var hlTxt=isFinite(hl)?hl.toFixed(2)+&quot; períodos&quot;:&quot;não estacionário&quot;;
+out.innerHTML=&quot;Hedge ratio (beta): &lt;b&gt;&quot;+b.toFixed(4)+&quot;&lt;/b&gt;&lt;br&gt;&quot;+
+&quot;ADF simplificado (rho): &lt;b&gt;&quot;+rho.toFixed(4)+&quot;&lt;/b&gt;&lt;br&gt;&quot;+
+&quot;Meia-vida do spread: &lt;b&gt;&quot;+hlTxt+&quot;&lt;/b&gt;&lt;br&gt;&quot;+
+&quot;Z-score calculado: &lt;b&gt;&quot;+zc.toFixed(3)+&quot;&lt;/b&gt; (informado: &quot;+z.toFixed(2)+&quot;)&lt;br&gt;&quot;+
+&quot;&lt;div class=&#x27;score&#x27;&gt;Score: &quot;+s+&quot;/100&lt;/div&gt;&quot;;
+};
+&lt;/script&gt;
+
+&lt;footer style=&quot;margin-top:24px;padding:14px;border-top:1px solid #334155;color:#94a3b8;font-size:12px;text-align:center;&quot;&gt;Esta é uma DEMONSTRAÇÃO limitada. Ferramenta educativa: os resultados são estimativas. Não é recomendação financeira.&lt;/footer&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>
